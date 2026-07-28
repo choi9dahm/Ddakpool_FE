@@ -61,7 +61,16 @@ export function validateJobUrl(input: string): {
     return { valid: false, code: "url_format", message: FORMAT_ERROR };
   }
 
-  if (host.includes("saramin.co.kr") || host.includes("jobkorea.co.kr")) {
+  const isSaramin =
+    host === "saram.in" ||
+    host.endsWith(".saram.in") ||
+    host.includes("saramin.co.kr");
+  const isJobkorea =
+    host === "joburl.kr" ||
+    host.endsWith(".joburl.kr") ||
+    host.includes("jobkorea.co.kr");
+
+  if (isSaramin || isJobkorea) {
     return { valid: true };
   }
 
