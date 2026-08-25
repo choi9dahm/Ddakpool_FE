@@ -5,6 +5,8 @@ import { getJobImageUrl } from "@/lib/jobImageUrl";
 import { assets } from "@/lib/assets";
 import type { JobImage, JobPosting } from "@/lib/types";
 import { AssetImage } from "@/components/ui/AssetImage";
+import { Spinner } from "@/components/ui/Spinner";
+import { apiFetch, ApiError } from "@/lib/api-client";
 
 export interface PendingImage {
   id: string;
@@ -22,6 +24,10 @@ interface OriginalTabProps {
     pending: PendingImage[],
     deletedIds: string[]
   ) => void;
+  /** form에 저장하지 않은 변경사항이 있는지 — 있으면 OCR로 필드를 덮어쓰지 않도록 막는다 */
+  dirty: boolean;
+  /** OCR로 필드를 채운 최신 job을 부모(JobDetailModal)에 반영 */
+  onOcrFilled: (job: JobPosting) => void;
 }
 
 export function OriginalTab({
@@ -31,10 +37,14 @@ export function OriginalTab({
   pendingImages,
   deletedImageIds,
   onPendingChange,
+  dirty,
+  onOcrFilled,
 }: OriginalTabProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrError, setOcrError] = useState("");
 
   const savedImages = (job.job_posting_images ?? []).filter(
     (img) => !deletedImageIds.includes(img.id)
@@ -101,6 +111,26 @@ export function OriginalTab({
     if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
   }
 
+  async function handleOcrFill() {
+    if (dirty || ocrLoading || savedImages.length === 0) return;
+    setOcrLoading(true);
+    setOcrError("");
+    try {
+      const updated = await apiFetch<JobPosting>(`/jobs/${job.id}/ocr-fill`, {
+        method: "POST",
+      });
+      onOcrFilled(updated);
+    } catch (err) {
+      setOcrError(
+        err instanceof ApiError && err.code === "no_ocr_text"
+          ? "이미지에서 인식된 텍스트가 없어요."
+          : "이미지에서 텍스트를 가져오지 못했어요. 잠시 후 다시 시도해 주세요."
+      );
+    } finally {
+      setOcrLoading(false);
+    }
+  }
+
   const showRawFail = job.parsing_status === "fail" && !form.raw_text;
 
   return (
@@ -160,6 +190,36 @@ export function OriginalTab({
               </span>
             )}
           </div>
+
+          {savedImages.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleOcrFill}
+                disabled={dirty || ocrLoading}
+                className="inline-flex items-center gap-2 rounded-full border border-dd-black bg-white px-4 py-1.5 text-xs font-semibold tracking-[-0.132px] text-dd-black disabled:border-dd-gray-400 disabled:text-dd-gray-500"
+              >
+                {ocrLoading ? (
+                  <>
+                    이미지 인식 중
+                    <Spinner className="size-3" />
+                  </>
+                ) : (
+                  "이미지에서 텍스트 채우기"
+                )}
+              </button>
+              {dirty && (
+                <span className="text-xs tracking-[-0.132px] text-dd-gray-500">
+                  저장하지 않은 변경사항이 있어요. 먼저 저장해 주세요.
+                </span>
+              )}
+              {ocrError && (
+                <span className="text-xs tracking-[-0.132px] text-dd-error">
+                  *{ocrError}
+                </span>
+              )}
+            </div>
+          )}
 
           {totalCount > 0 && (
             <div className="flex flex-wrap gap-5">
