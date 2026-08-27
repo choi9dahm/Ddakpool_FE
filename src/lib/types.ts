@@ -51,7 +51,6 @@ export interface JobImage {
   id: string;
   storage_path: string;
   sort_order: number;
-  ocr_text?: string | null;
 }
 
 export interface Profile {

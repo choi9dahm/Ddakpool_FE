@@ -103,12 +103,6 @@ export function JobDetailModal({
     setDirty(true);
   }
 
-  function handleOcrFilled(updated: JobPosting) {
-    setCurrentJob(updated);
-    setForm(withDerivedDeadline(updated));
-    setDirty(false);
-  }
-
   async function handleSave() {
     if (saving) return;
 
@@ -344,8 +338,6 @@ export function JobDetailModal({
                 pendingImages={pendingImages}
                 deletedImageIds={deletedImageIds}
                 onPendingChange={handlePendingChange}
-                dirty={dirty}
-                onOcrFilled={handleOcrFilled}
               />
             )}
             {tab === "memo" && <MemoTab form={form} onChange={updateForm} />}
