@@ -39,6 +39,7 @@ export function JobListPage({ folderId, uncategorized }: JobListPageProps) {
   const [networkError, setNetworkError] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [manualAddOpen, setManualAddOpen] = useState(false);
+  const [manualAddError, setManualAddError] = useState<string | null>(null);
   const [toastOpen, setToastOpen] = useState(false);
   const [listResetKey, setListResetKey] = useState(0);
   const [urlResetKey, setUrlResetKey] = useState(0);
@@ -154,7 +155,14 @@ export function JobListPage({ folderId, uncategorized }: JobListPageProps) {
           saved_at: "",
           updated_at: "",
         });
-      } catch {
+      } catch (err) {
+        // 서버가 이유를 준 4xx를 네트워크 오류로 뭉개면 원인이 가려진다
+        // (배포 불일치로 엔드포인트가 없을 때 404가 "인터넷 연결" 팝업으로 보였음).
+        if (err instanceof ApiError && err.status < 500) {
+          console.error("manual add failed:", err.status, err.code, err.message);
+          setManualAddError(err.message);
+          return;
+        }
         setNetworkError(true);
       } finally {
         setParseLoading(false);
@@ -362,6 +370,21 @@ export function JobListPage({ folderId, uncategorized }: JobListPageProps) {
         }
       >
         <p>인터넷 연결을 확인하고 다시 시도해 주세요.</p>
+      </Modal>
+
+      <Modal
+        open={!!manualAddError}
+        title="안내"
+        onClose={() => setManualAddError(null)}
+        variant="error"
+        actions={
+          <ModalButton variant="outline" onClick={() => setManualAddError(null)}>
+            닫기
+          </ModalButton>
+        }
+      >
+        <p>공고를 불러오지 못했어요.</p>
+        <p className="mt-1 text-sm text-dd-gray-500">{manualAddError}</p>
       </Modal>
 
       {selectedJob && (
