@@ -5,14 +5,14 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { getDdayLabel } from "@/lib/dday";
 import { deriveDeadlineStatus } from "@/lib/deadlineStatus";
-import { FOLDER_SLOT_COLORS } from "@/lib/constants";
 import { layout } from "@/lib/design-tokens";
 import type { Folder, JobPosting, StructuredKeyword } from "@/lib/types";
 import { InsightTab } from "./InsightTab";
 import { OriginalTab, type PendingImage } from "./OriginalTab";
 import { MemoTab } from "./MemoTab";
 import { Modal, ModalButton } from "../ui/Modal";
-import { Spinner } from "../ui/Spinner";
+import { SaveButton } from "../ui/SaveButton";
+import { FolderPicker } from "../ui/FolderPicker";
 import { AssetImage } from "../ui/AssetImage";
 import { assets } from "@/lib/assets";
 
@@ -54,18 +54,31 @@ export function JobDetailModal({
   onDeleted,
   onSaved,
 }: JobDetailModalProps) {
+  const isDraft = !job.id;
   const [tab, setTab] = useState<Tab>("insight");
   const [form, setForm] = useState<JobPosting>(() => withDerivedDeadline(job));
   const [dirty, setDirty] = useState(false);
   const [showLeave, setShowLeave] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [requiredFieldError, setRequiredFieldError] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [folderOpen, setFolderOpen] = useState(false);
   const [currentJob, setCurrentJob] = useState(job);
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
   const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
   const keywordApplyRef = useRef<(() => StructuredKeyword[] | null) | null>(null);
+  // draft(수동 추가)의 첫 POST 성공 후 id를 담아둔다. 이미지 업로드 등 이후 단계가
+  // 실패해 '저장하기'를 다시 눌러도 공고가 중복 생성되지 않게 하기 위함.
+  const createdIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isDraft) return;
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      e.preventDefault();
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDraft]);
 
   const { data: folders = [] } = useQuery({
     queryKey: ["folders"],
@@ -106,6 +119,12 @@ export function JobDetailModal({
   async function handleSave() {
     if (saving) return;
 
+    if (isDraft && (!form.company_name.trim() || !form.recruitment_field.trim())) {
+      setTab("insight");
+      setRequiredFieldError(true);
+      return;
+    }
+
     let formToSave = { ...form };
     const appliedKeywords = keywordApplyRef.current?.();
     if (appliedKeywords) {
@@ -115,36 +134,48 @@ export function JobDetailModal({
 
     setSaving(true);
     try {
-      await apiFetch<JobPosting>(`/jobs/${job.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          folder_id: formToSave.folder_id,
-          company_name: formToSave.company_name,
-          job_title: formToSave.job_title,
-          recruitment_field: formToSave.recruitment_field,
-          job_description: formToSave.job_description,
-          qualifications: formToSave.qualifications,
-          preferences: formToSave.preferences,
-          industry: formToSave.industry,
-          deadline_raw: formToSave.deadline_raw,
-          deadline_date: formToSave.deadline_date,
-          deadline_status: formToSave.deadline_status,
-          required_documents: formToSave.required_documents,
-          application_method: formToSave.application_method,
-          raw_text: formToSave.raw_text,
-          memo: formToSave.memo,
-          competency_keywords: formToSave.competency_keywords,
-        }),
-      });
+      const payload = {
+        folder_id: formToSave.folder_id,
+        company_name: formToSave.company_name,
+        job_title: formToSave.job_title,
+        recruitment_field: formToSave.recruitment_field,
+        job_description: formToSave.job_description,
+        qualifications: formToSave.qualifications,
+        preferences: formToSave.preferences,
+        industry: formToSave.industry,
+        deadline_raw: formToSave.deadline_raw,
+        deadline_date: formToSave.deadline_date,
+        deadline_status: formToSave.deadline_status,
+        required_documents: formToSave.required_documents,
+        application_method: formToSave.application_method,
+        raw_text: formToSave.raw_text,
+        memo: formToSave.memo,
+        competency_keywords: formToSave.competency_keywords,
+      };
+
+      // draft의 첫 POST가 이미 성공했는데 이미지 업로드 등에서 재시도되는 경우
+      // 다시 POST하면 공고가 중복 생성된다 — 생성된 id가 있으면 그 뒤로는 PATCH.
+      const targetId = createdIdRef.current ?? job.id;
+      const saved =
+        isDraft && !createdIdRef.current
+          ? await apiFetch<JobPosting>("/jobs", {
+              method: "POST",
+              body: JSON.stringify(payload),
+            })
+          : await apiFetch<JobPosting>(`/jobs/${targetId}`, {
+              method: "PATCH",
+              body: JSON.stringify(payload),
+            });
+      createdIdRef.current = saved.id;
 
       for (const id of deletedImageIds) {
-        await apiFetch(`/jobs/${job.id}/images/${id}`, { method: "DELETE" });
+        await apiFetch(`/jobs/${saved.id}/images/${id}`, { method: "DELETE" });
       }
 
       for (const pending of pendingImages) {
         const formData = new FormData();
         formData.append("file", pending.file);
-        await apiFetch(`/jobs/${job.id}/images`, {
+        await apiFetch(`/jobs/${saved.id}/images`, {
           method: "POST",
           body: formData,
         });
@@ -154,7 +185,7 @@ export function JobDetailModal({
       setPendingImages([]);
       setDeletedImageIds([]);
 
-      const updated = await apiFetch<JobPosting>(`/jobs/${job.id}`);
+      const updated = await apiFetch<JobPosting>(`/jobs/${saved.id}`);
       setDirty(false);
       onUpdated(updated);
       onClose();
@@ -174,7 +205,7 @@ export function JobDetailModal({
   }
 
   function handleClose() {
-    if (dirty) {
+    if (dirty || isDraft) {
       setShowLeave(true);
       return;
     }
@@ -190,10 +221,6 @@ export function JobDetailModal({
   }
 
   const dday = getDdayLabel(form.deadline_date, form.deadline_status);
-  const folder = folders.find((f) => f.id === form.folder_id);
-  const folderColor = folder
-    ? FOLDER_SLOT_COLORS[folder.slot] ?? FOLDER_SLOT_COLORS[1]
-    : null;
   const displayTitle =
     form.recruitment_field || form.job_title || "모집 분야 미정";
 
@@ -230,60 +257,12 @@ export function JobDetailModal({
                 <h2 className="order-2 max-w-full text-[20px] font-extrabold leading-[1.5] tracking-[-0.22px] text-dd-black md:order-none md:text-[30px] md:tracking-[-0.33px]">
                   {displayTitle}
                 </h2>
-                <div className="relative order-1 shrink-0 md:order-none">
-                  <button
-                    type="button"
-                    onClick={() => setFolderOpen(!folderOpen)}
-                    className="flex items-center gap-2 rounded-full px-2.5 py-1.5 text-[10px] font-semibold tracking-[-0.11px] text-white md:px-[21px] md:text-base md:tracking-[-0.176px]"
-                    style={{
-                      backgroundColor: folderColor?.bg ?? "#19B469",
-                    }}
-                  >
-                    {folder?.name ?? "저장 목적을 선택하세요"}
-                    <AssetImage
-                      src={assets.iconDetailChevron}
-                      alt=""
-                      width={9}
-                      height={5}
-                      placeholderClassName="bg-transparent"
-                    />
-                  </button>
-                  {folderOpen && (
-                    <div className="absolute left-0 top-full z-20 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-dd-gray-400 bg-white shadow-lg">
-                      {folders.map((f) => {
-                        const color =
-                          FOLDER_SLOT_COLORS[f.slot] ?? FOLDER_SLOT_COLORS[1];
-                        return (
-                          <button
-                            key={f.id}
-                            type="button"
-                            onClick={() => {
-                              updateForm({ folder_id: f.id });
-                              setFolderOpen(false);
-                            }}
-                            className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-dd-gray-100"
-                          >
-                            <span
-                              className="size-2 shrink-0 rounded-full"
-                              style={{ backgroundColor: color.bg }}
-                            />
-                            {f.name}
-                          </button>
-                        );
-                      })}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateForm({ folder_id: null });
-                          setFolderOpen(false);
-                        }}
-                        className="block w-full border-t border-dd-gray-200 px-4 py-2.5 text-left text-sm text-dd-gray-500 hover:bg-dd-gray-100"
-                      >
-                        미분류
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <FolderPicker
+                  folders={folders}
+                  value={form.folder_id}
+                  onChange={(id) => updateForm({ folder_id: id })}
+                  wrapperClassName="relative order-1 shrink-0 md:order-none"
+                />
               </div>
               <p className="mt-0.5 text-sm tracking-[-0.154px] text-dd-black">
                 {form.company_name || "기업명 없음"}
@@ -358,28 +337,20 @@ export function JobDetailModal({
             )}
 
             <div className="flex w-full items-center justify-between gap-[5px] md:w-auto md:justify-end">
-              <button
-                type="button"
-                onClick={() => setShowDelete(true)}
-                className="rounded-full bg-dd-black px-[31px] py-2 text-sm font-semibold tracking-[-0.154px] text-white"
-              >
-                삭제
-              </button>
-              <button
-                type="button"
+              {!isDraft && (
+                <button
+                  type="button"
+                  onClick={() => setShowDelete(true)}
+                  className="rounded-full bg-dd-black px-[31px] py-2 text-sm font-semibold tracking-[-0.154px] text-white"
+                >
+                  삭제
+                </button>
+              )}
+              <SaveButton
                 onClick={handleSave}
-                disabled={!dirty || saving}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-dd-primary-green px-5 py-2 text-sm font-semibold tracking-[-0.154px] text-white disabled:bg-dd-gray-500"
-              >
-                {saving ? (
-                  <>
-                    저장중
-                    <Spinner className="size-3" />
-                  </>
-                ) : (
-                  "저장하기"
-                )}
-              </button>
+                disabled={(!dirty && !isDraft) || saving}
+                saving={saving}
+              />
             </div>
           </div>
         </div>
@@ -399,6 +370,23 @@ export function JobDetailModal({
         <p>
           수정한 내용을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.
         </p>
+      </Modal>
+
+      <Modal
+        open={requiredFieldError}
+        title="안내"
+        onClose={() => setRequiredFieldError(false)}
+        variant="error"
+        actions={
+          <ModalButton
+            variant="outline"
+            onClick={() => setRequiredFieldError(false)}
+          >
+            닫기
+          </ModalButton>
+        }
+      >
+        <p>필수 입력 필드를 채워주세요.</p>
       </Modal>
 
       <Modal

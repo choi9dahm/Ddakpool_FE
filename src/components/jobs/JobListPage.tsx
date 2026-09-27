@@ -11,6 +11,8 @@ import { HeaderArea } from "../layout/HeaderArea";
 import { TabGNB } from "../layout/GNB";
 import { FilterBar } from "./FilterBar";
 import { JobCard } from "./JobCard";
+import { ManualAddCard } from "./ManualAddCard";
+import { ManualAddModal } from "./ManualAddModal";
 import { JobDetailModal } from "../job-detail/JobDetailModal";
 import { Modal, ModalButton } from "../ui/Modal";
 import { Spinner } from "../ui/Spinner";
@@ -36,6 +38,7 @@ export function JobListPage({ folderId, uncategorized }: JobListPageProps) {
   const [duplicateUrl, setDuplicateUrl] = useState(false);
   const [networkError, setNetworkError] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [manualAddOpen, setManualAddOpen] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [listResetKey, setListResetKey] = useState(0);
   const [urlResetKey, setUrlResetKey] = useState(0);
@@ -131,6 +134,35 @@ export function JobListPage({ folderId, uncategorized }: JobListPageProps) {
     [queryClient]
   );
 
+  const handleManualAdd = useCallback(
+    async (rawText: string, folderId: string | null) => {
+      setManualAddOpen(false);
+      setParseLoading(true);
+      setNetworkError(false);
+      try {
+        const draft = await apiFetch<JobPosting>("/jobs/parse-text", {
+          method: "POST",
+          body: JSON.stringify({ raw_text: rawText }),
+        });
+        // 서버 draft는 id 없이 온다 (아직 미저장) — JobDetailModal은 이걸로 draft 모드를 판단한다.
+        setSelectedJob({
+          ...draft,
+          id: "",
+          user_id: "",
+          folder_id: folderId,
+          memo: "",
+          saved_at: "",
+          updated_at: "",
+        });
+      } catch {
+        setNetworkError(true);
+      } finally {
+        setParseLoading(false);
+      }
+    },
+    []
+  );
+
   async function confirmDelete() {
     if (!deleteTarget) return;
     await apiFetch(`/jobs/${deleteTarget.id}`, { method: "DELETE" });
@@ -177,40 +209,52 @@ export function JobListPage({ folderId, uncategorized }: JobListPageProps) {
           <div className="flex justify-center py-20">
             <Spinner className="size-8 text-dd-green" />
           </div>
-        ) : jobs.length === 0 ? (
-          showEmptyIllustration ? (
-            <div className="flex justify-center">
-              <AssetImage
-                src={assets.listEmpty}
-                alt="사람인·잡코리아에서 URL을 복사해오세요. 저장하기 전 목적 태그로 분류하세요. 목적에 맞게 분류하고 조회하세요."
-                width={1042}
-                height={253}
-                className="h-auto w-full max-w-[1042px] object-contain"
-                placeholderClassName="h-[253px] w-full max-w-[1042px] rounded bg-dd-gray-200"
-                priority
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center py-24">
-              <p className="text-base font-medium text-dd-gray-500">
-                {emptyMessage}
-              </p>
-            </div>
-          )
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,252px)] justify-start gap-3">
-            {jobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                onOpen={setSelectedJob}
-                onDelete={setDeleteTarget}
-                selectedKeywords={selectedKeywords}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-[repeat(auto-fill,252px)] justify-start gap-3">
+              <ManualAddCard onClick={() => setManualAddOpen(true)} />
+              {jobs.map((job) => (
+                <JobCard
+                  key={job.id}
+                  job={job}
+                  onOpen={setSelectedJob}
+                  onDelete={setDeleteTarget}
+                  selectedKeywords={selectedKeywords}
+                />
+              ))}
+            </div>
+
+            {jobs.length === 0 &&
+              (showEmptyIllustration ? (
+                <div className="mt-6 flex justify-center">
+                  <AssetImage
+                    src={assets.listEmpty}
+                    alt="사람인·잡코리아에서 URL을 복사해오세요. 저장하기 전 목적 태그로 분류하세요. 목적에 맞게 분류하고 조회하세요."
+                    width={1042}
+                    height={253}
+                    className="h-auto w-full max-w-[1042px] object-contain"
+                    placeholderClassName="h-[253px] w-full max-w-[1042px] rounded bg-dd-gray-200"
+                    priority
+                  />
+                </div>
+              ) : (
+                <div className="mt-6 flex items-center justify-center py-24">
+                  <p className="text-base font-medium text-dd-gray-500">
+                    {emptyMessage}
+                  </p>
+                </div>
+              ))}
+          </>
         )}
       </div>
+
+      {manualAddOpen && (
+        <ManualAddModal
+          onClose={() => setManualAddOpen(false)}
+          onSubmit={handleManualAdd}
+          loading={parseLoading}
+        />
+      )}
 
       {parseLoading && (
         <Modal open title="로딩 중" onClose={() => { }} variant="loading">
