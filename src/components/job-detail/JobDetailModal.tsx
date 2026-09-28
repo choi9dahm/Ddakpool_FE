@@ -60,7 +60,7 @@ export function JobDetailModal({
   const [dirty, setDirty] = useState(false);
   const [showLeave, setShowLeave] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [saveError, setSaveError] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [requiredFieldError, setRequiredFieldError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [currentJob, setCurrentJob] = useState(job);
@@ -160,7 +160,11 @@ export function JobDetailModal({
         isDraft && !createdIdRef.current
           ? await apiFetch<JobPosting>("/jobs", {
               method: "POST",
-              body: JSON.stringify(payload),
+              // source_url은 생성 시에만 받는다. PATCH로는 변경 불가(updateJobSchema에 없음).
+              body: JSON.stringify({
+                ...payload,
+                source_url: formToSave.source_url || null,
+              }),
             })
           : await apiFetch<JobPosting>(`/jobs/${targetId}`, {
               method: "PATCH",
@@ -191,7 +195,14 @@ export function JobDetailModal({
       onClose();
       onSaved?.();
     } catch (err) {
-      if (err instanceof ApiError) setSaveError(true);
+      // ApiError로만 걸러내면 네트워크/런타임 예외는 팝업도 없이 조용히 씹혀서
+      // 버튼이 죽은 것처럼 보인다 (JobListPage.handleManualAdd에서 겪은 것과 같은 결함).
+      console.error("job save failed:", err);
+      if (err instanceof ApiError) {
+        setSaveError(err.message);
+      } else {
+        setSaveError("인터넷 연결을 확인하고 다시 시도해 주세요.");
+      }
     } finally {
       setSaving(false);
     }
@@ -357,19 +368,18 @@ export function JobDetailModal({
       </div>
 
       <Modal
-        open={saveError}
+        open={!!saveError}
         title="안내"
-        onClose={() => setSaveError(false)}
+        onClose={() => setSaveError(null)}
         variant="error"
         actions={
-          <ModalButton variant="outline" onClick={() => setSaveError(false)}>
+          <ModalButton variant="outline" onClick={() => setSaveError(null)}>
             닫기
           </ModalButton>
         }
       >
-        <p>
-          수정한 내용을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.
-        </p>
+        <p>수정한 내용을 저장하지 못했어요.</p>
+        <p className="mt-1 text-sm text-dd-gray-500">{saveError}</p>
       </Modal>
 
       <Modal

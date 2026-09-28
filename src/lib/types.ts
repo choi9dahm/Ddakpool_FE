@@ -21,7 +21,7 @@ export interface Folder {
 export interface JobPosting {
   id: string;
   user_id: string;
-  source_url: string;
+  source_url: string | null;
   platform: string;
   parsing_status: "success" | "partial" | "fail";
   parse_failure_reason: string | null;
