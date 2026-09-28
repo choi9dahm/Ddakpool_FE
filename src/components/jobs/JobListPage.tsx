@@ -136,7 +136,11 @@ export function JobListPage({ folderId, uncategorized }: JobListPageProps) {
   );
 
   const handleManualAdd = useCallback(
-    async (rawText: string, folderId: string | null) => {
+    async (
+      rawText: string,
+      folderId: string | null,
+      sourceUrl: string | null
+    ) => {
       setManualAddOpen(false);
       setParseLoading(true);
       setNetworkError(false);
@@ -151,6 +155,7 @@ export function JobListPage({ folderId, uncategorized }: JobListPageProps) {
           id: "",
           user_id: "",
           folder_id: folderId,
+          source_url: sourceUrl,
           memo: "",
           saved_at: "",
           updated_at: "",

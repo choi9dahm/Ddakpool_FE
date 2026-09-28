@@ -160,7 +160,11 @@ export function JobDetailModal({
         isDraft && !createdIdRef.current
           ? await apiFetch<JobPosting>("/jobs", {
               method: "POST",
-              body: JSON.stringify(payload),
+              // source_url은 생성 시에만 받는다. PATCH로는 변경 불가(updateJobSchema에 없음).
+              body: JSON.stringify({
+                ...payload,
+                source_url: formToSave.source_url || null,
+              }),
             })
           : await apiFetch<JobPosting>(`/jobs/${targetId}`, {
               method: "PATCH",
