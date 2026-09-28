@@ -5,6 +5,7 @@ import { getJobImageUrl } from "@/lib/jobImageUrl";
 import { assets } from "@/lib/assets";
 import type { JobImage, JobPosting } from "@/lib/types";
 import { AssetImage } from "@/components/ui/AssetImage";
+import { OcrConvertModal, type OcrTarget } from "./OcrConvertModal";
 
 export interface PendingImage {
   id: string;
@@ -22,7 +23,11 @@ interface OriginalTabProps {
     pending: PendingImage[],
     deletedIds: string[]
   ) => void;
+  onGenerateSummary: () => void;
 }
+
+const ACTION_BUTTON_CLASS =
+  "ml-1 border-b border-dd-gray-500 text-xs tracking-[-0.132px] text-dd-gray-500 disabled:cursor-not-allowed disabled:opacity-40";
 
 export function OriginalTab({
   job,
@@ -31,15 +36,29 @@ export function OriginalTab({
   pendingImages,
   deletedImageIds,
   onPendingChange,
+  onGenerateSummary,
 }: OriginalTabProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
+  const [ocrModalOpen, setOcrModalOpen] = useState(false);
 
   const savedImages = (job.job_posting_images ?? []).filter(
     (img) => !deletedImageIds.includes(img.id)
   );
   const totalCount = savedImages.length + pendingImages.length;
+
+  function handleOcrConverted(text: string, target: OcrTarget) {
+    if (target === "raw_text") {
+      onChange({
+        raw_text: form.raw_text ? `${form.raw_text}\n\n${text}` : text,
+      });
+      return;
+    }
+    // MemoTab과 동일하게 5000자에서 조용히 자른다(MemoTab의 입력/붙여넣기도 별도 안내 없이 자름).
+    const combined = form.memo ? `${form.memo}\n\n${text}` : text;
+    onChange({ memo: combined.slice(0, 5000) });
+  }
 
   useEffect(() => {
     return () => {
@@ -106,9 +125,19 @@ export function OriginalTab({
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <div className="flex shrink-0 flex-col gap-1 border-b border-t border-dd-gray-400 bg-white px-[18px] py-4 md:flex-row md:items-center md:gap-4 md:px-9">
-        <h3 className="shrink-0 text-xl font-semibold tracking-[-0.22px] text-dd-black">
-          원문 & 이미지 첨부
-        </h3>
+        <div className="flex shrink-0 items-center">
+          <h3 className="text-xl font-semibold tracking-[-0.22px] text-dd-black">
+            원문 & 이미지 첨부
+          </h3>
+          <button
+            type="button"
+            onClick={onGenerateSummary}
+            disabled={!form.raw_text.trim()}
+            className={ACTION_BUTTON_CLASS}
+          >
+            요약 생성
+          </button>
+        </div>
         <p className="text-xs tracking-[-0.132px] text-dd-gray-500">
           URL에서 가져온 텍스트 원문과 캡처 이미지를 함께 보관합니다.
         </p>
@@ -154,6 +183,14 @@ export function OriginalTab({
             <span className="text-sm font-semibold tracking-[-0.154px] text-dd-black">
               이미지 첨부
             </span>
+            <button
+              type="button"
+              onClick={() => setOcrModalOpen(true)}
+              disabled={totalCount === 0}
+              className={ACTION_BUTTON_CLASS}
+            >
+              이미지 텍스트 변환
+            </button>
             {error && (
               <span className="text-xs tracking-[-0.132px] text-dd-error">
                 *{error}
@@ -288,6 +325,15 @@ export function OriginalTab({
             onClick={(e) => e.stopPropagation()}
           />
         </div>
+      )}
+
+      {ocrModalOpen && (
+        <OcrConvertModal
+          savedImages={savedImages}
+          pendingImages={pendingImages}
+          onClose={() => setOcrModalOpen(false)}
+          onConverted={handleOcrConverted}
+        />
       )}
     </div>
   );
