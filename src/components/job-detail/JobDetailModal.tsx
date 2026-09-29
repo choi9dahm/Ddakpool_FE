@@ -62,6 +62,9 @@ export function JobDetailModal({
   const [showDelete, setShowDelete] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [requiredFieldError, setRequiredFieldError] = useState(false);
+  const [summaryConfirmOpen, setSummaryConfirmOpen] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [currentJob, setCurrentJob] = useState(job);
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
@@ -208,6 +211,49 @@ export function JobDetailModal({
     }
   }
 
+  function handleGenerateSummary() {
+    if (!form.raw_text.trim()) return;
+    setSummaryConfirmOpen(true);
+  }
+
+  async function confirmGenerateSummary() {
+    setSummaryConfirmOpen(false);
+    setSummaryLoading(true);
+    try {
+      const parsed = await apiFetch<JobPosting>("/jobs/parse-text", {
+        method: "POST",
+        body: JSON.stringify({ raw_text: form.raw_text }),
+      });
+      // allowlist — parse-text 응답엔 platform/source_url/parsing_status 등
+      // draft 전용 필드도 섞여 있어 form에 그대로 스프레드하면 안 된다.
+      updateForm({
+        company_name: parsed.company_name,
+        job_title: parsed.job_title,
+        recruitment_field: parsed.recruitment_field,
+        job_description: parsed.job_description,
+        qualifications: parsed.qualifications,
+        preferences: parsed.preferences,
+        industry: parsed.industry,
+        deadline_raw: parsed.deadline_raw,
+        deadline_date: parsed.deadline_date,
+        deadline_status: parsed.deadline_status,
+        required_documents: parsed.required_documents,
+        application_method: parsed.application_method,
+        competency_keywords: parsed.competency_keywords,
+      });
+      setTab("insight");
+    } catch (err) {
+      console.error("summary generation failed:", err);
+      setSummaryError(
+        err instanceof ApiError
+          ? err.message
+          : "인터넷 연결을 확인하고 다시 시도해 주세요."
+      );
+    } finally {
+      setSummaryLoading(false);
+    }
+  }
+
   async function handleDelete() {
     discardPending(pendingImages);
     await apiFetch(`/jobs/${job.id}`, { method: "DELETE" });
@@ -328,6 +374,7 @@ export function JobDetailModal({
                 pendingImages={pendingImages}
                 deletedImageIds={deletedImageIds}
                 onPendingChange={handlePendingChange}
+                onGenerateSummary={handleGenerateSummary}
               />
             )}
             {tab === "memo" && <MemoTab form={form} onChange={updateForm} />}
@@ -380,6 +427,52 @@ export function JobDetailModal({
       >
         <p>수정한 내용을 저장하지 못했어요.</p>
         <p className="mt-1 text-sm text-dd-gray-500">{saveError}</p>
+      </Modal>
+
+      {summaryLoading && (
+        <Modal open title="로딩 중" onClose={() => {}} variant="loading">
+          <p>원문을 분석하고 있어요. 잠시만 기다려 주세요.</p>
+        </Modal>
+      )}
+
+      <Modal
+        open={summaryConfirmOpen}
+        title="안내"
+        onClose={() => setSummaryConfirmOpen(false)}
+        variant="confirm-leave"
+        actions={
+          <>
+            <ModalButton variant="danger" onClick={confirmGenerateSummary}>
+              계속하기
+            </ModalButton>
+            <ModalButton
+              variant="outline"
+              onClick={() => setSummaryConfirmOpen(false)}
+            >
+              취소
+            </ModalButton>
+          </>
+        }
+      >
+        <p>
+          요약 탭의 현재 내용이 모두 사라지고, 원문을 다시 분석한 결과로
+          채워져요. 계속할까요?
+        </p>
+      </Modal>
+
+      <Modal
+        open={!!summaryError}
+        title="안내"
+        onClose={() => setSummaryError(null)}
+        variant="error"
+        actions={
+          <ModalButton variant="outline" onClick={() => setSummaryError(null)}>
+            닫기
+          </ModalButton>
+        }
+      >
+        <p>요약을 생성하지 못했어요.</p>
+        <p className="mt-1 text-sm text-dd-gray-500">{summaryError}</p>
       </Modal>
 
       <Modal
