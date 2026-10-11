@@ -10,6 +10,7 @@ import { AssetImage } from "@/components/ui/AssetImage";
 import { FolderSubmitButton } from "@/components/ui/FolderSubmitButton";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { assets } from "@/lib/assets";
+import { hasGuestFlag } from "@/lib/supabase/config";
 import { validateJobUrl } from "@/lib/validators";
 import type { Folder, Profile } from "@/lib/types";
 
@@ -30,20 +31,28 @@ export function HeaderArea({ onSubmit, loading, compact }: HeaderAreaProps) {
   const [error, setError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [folderModalOpen, setFolderModalOpen] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
+
+  // document.cookie 는 서버에서 읽을 수 없다 — 마운트 후에만 실제 값으로 갱신해
+  // SSR과 하이드레이션의 첫 렌더가 어긋나지 않게 한다.
+  useEffect(() => {
+    setIsGuest(hasGuestFlag());
+  }, []);
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: () => apiFetch<Profile>("/profile"),
+    enabled: !isGuest,
   });
 
   useEffect(() => {
-    if (posthog.__loaded && profile?.id) {
+    if (posthog.__loaded && profile?.id && !isGuest) {
       posthog.identify(profile.id, {
         email: profile.email,
         nickname: profile.nickname,
       });
     }
-  }, [profile]);
+  }, [profile, isGuest]);
 
   const { data: folders = [] } = useQuery({
     queryKey: ["folders"],
@@ -88,19 +97,28 @@ export function HeaderArea({ onSubmit, loading, compact }: HeaderAreaProps) {
     >
       <div className={`flex ${compact || pathname === "/settings" ? "h-[21px]" : "justify-end"}`}>
         {!compact && pathname !== "/settings" && (
-          <Link
-            href="/settings"
-            className="font-pretendard flex items-center gap-1 text-sm font-semibold text-dd-black hover:opacity-80"
-          >
-            <span>{profile?.nickname ?? "설정"}</span>
-            <AssetImage
-              src={assets.iconSettings}
-              alt=""
-              width={16}
-              height={16}
-              placeholderClassName="bg-transparent"
-            />
-          </Link>
+          isGuest ? (
+            <Link
+              href="/login"
+              className="font-pretendard text-sm font-semibold text-dd-gray-500 hover:opacity-80"
+            >
+              로그인
+            </Link>
+          ) : (
+            <Link
+              href="/settings"
+              className="font-pretendard flex items-center gap-1 text-sm font-semibold text-dd-black hover:opacity-80"
+            >
+              <span>{profile?.nickname ?? "설정"}</span>
+              <AssetImage
+                src={assets.iconSettings}
+                alt=""
+                width={16}
+                height={16}
+                placeholderClassName="bg-transparent"
+              />
+            </Link>
+          )
         )}
       </div>
 

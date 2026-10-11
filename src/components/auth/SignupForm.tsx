@@ -8,8 +8,13 @@ import { Modal, ModalButton } from "@/components/ui/Modal";
 import { assets } from "@/lib/assets";
 import { CS_EMAIL } from "@/lib/constants";
 import { apiFetch } from "@/lib/api-client";
+import { captureGuestToken, claimGuest } from "@/lib/guest";
 import { createClient } from "@/lib/supabase/client";
-import { enableDevSession, isSupabaseConfigured } from "@/lib/supabase/config";
+import {
+  clearGuestFlag,
+  enableDevSession,
+  isSupabaseConfigured,
+} from "@/lib/supabase/config";
 import {
   emailSchema,
   nicknameSchema,
@@ -61,11 +66,15 @@ export function SignupForm() {
 
     if (!isSupabaseConfigured()) {
       setLoading(false);
+      clearGuestFlag();
       enableDevSession();
       router.push("/all");
       router.refresh();
       return;
     }
+
+    // 세션이 교체되기 전에 게스트 토큰을 확보해야 한다.
+    const guestToken = await captureGuestToken();
 
     try {
       await apiFetch("/auth/signup", {
@@ -86,13 +95,21 @@ export function SignupForm() {
 
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
 
     if (error) {
+      setLoading(false);
       router.push("/login");
       return;
     }
 
+    try {
+      await claimGuest(guestToken);
+    } catch (err) {
+      // 가입은 성공했으므로 진입을 막지 않는다.
+      console.error("guest claim failed:", err);
+    }
+
+    setLoading(false);
     router.push("/all");
     router.refresh();
   }

@@ -8,7 +8,11 @@ import { apiFetch } from "@/lib/api-client";
 import { assets } from "@/lib/assets";
 import { CS_EMAIL } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
-import { clearDevSession, isSupabaseConfigured } from "@/lib/supabase/config";
+import {
+  clearDevSession,
+  clearGuestFlag,
+  isSupabaseConfigured,
+} from "@/lib/supabase/config";
 import { nicknameSchema } from "@/lib/validators";
 import type { Profile } from "@/lib/types";
 import { Modal, ModalButton } from "@/components/ui/Modal";
@@ -59,6 +63,7 @@ export function SettingsPage() {
 
   async function handleLogout() {
     if (posthog.__loaded) posthog.reset();
+    clearGuestFlag();
 
     if (!isSupabaseConfigured()) {
       clearDevSession();
@@ -77,6 +82,7 @@ export function SettingsPage() {
     await apiFetch("/account", { method: "DELETE" });
 
     if (posthog.__loaded) posthog.reset();
+    clearGuestFlag();
 
     if (!isSupabaseConfigured()) {
       clearDevSession();
