@@ -108,6 +108,8 @@ export function SignupForm() {
     setLoading(false);
 
     if (error) {
+      // 사용자에게는 다듬은 문구만 보여주되, 실제 status/code는 진단용으로 남긴다.
+      console.error("signUp failed:", error.status, error.code, error.message);
       setErrors({ form: mapSignupAuthError(error) });
       return;
     }
@@ -211,6 +213,7 @@ export function SignupForm() {
     const { error } = await supabase.auth.resend({ type: "signup", email });
 
     if (error) {
+      console.error("resend failed:", error.status, error.code, error.message);
       setErrors((prev) => ({ ...prev, otp: mapResendAuthError(error) }));
       return;
     }
