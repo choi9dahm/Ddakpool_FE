@@ -186,7 +186,9 @@ export function LoginForm() {
         </button>
 
         <p className="text-center text-xs text-dd-gray-500">
-          딱풀은 현재 베타 서비스 입니다. 문의·제안은{" "}
+          딱풀은 현재 베타 서비스 입니다.
+          <br />
+          문의·제안은{" "}
           <a href={`mailto:${CS_EMAIL}`} className="underline">
             {CS_EMAIL}
           </a>{" "}
@@ -198,15 +200,17 @@ export function LoginForm() {
         open={guestPopupOpen}
         title="안내"
         onClose={() => setGuestPopupOpen(false)}
+        width={520}
         actions={
           <>
             <ModalButton
               variant="primary"
+              wide
               onClick={() => setGuestPopupOpen(false)}
             >
               로그인 하기
             </ModalButton>
-            <ModalButton variant="outline" onClick={handleContinueAsGuest}>
+            <ModalButton variant="outline" wide onClick={handleContinueAsGuest}>
               로그인 없이 계속
             </ModalButton>
           </>

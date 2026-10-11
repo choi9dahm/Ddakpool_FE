@@ -21,6 +21,7 @@ interface ModalProps {
   variant?: ModalVariant;
   actions?: React.ReactNode;
   closeOnBackdrop?: boolean;
+  width?: number;
 }
 
 function ModalIcon({ variant }: { variant: ModalVariant }) {
@@ -66,6 +67,7 @@ export function Modal({
   variant = "error",
   actions,
   closeOnBackdrop = false,
+  width = layout.modalWidth,
 }: ModalProps) {
   if (!open) return null;
 
@@ -76,8 +78,8 @@ export function Modal({
         onClick={closeOnBackdrop ? onClose : undefined}
       />
       <div
-        className="font-pretendard relative z-10 flex w-full max-w-[475px] flex-col overflow-hidden rounded-2xl shadow-xl"
-        style={{ width: layout.modalWidth }}
+        className="font-pretendard relative z-10 flex w-full flex-col overflow-hidden rounded-2xl shadow-xl"
+        style={{ width, maxWidth: width }}
         role="dialog"
         aria-modal="true"
       >
@@ -108,11 +110,14 @@ export function ModalButton({
   onClick,
   variant = "outline",
   disabled,
+  wide,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   variant?: "primary" | "danger" | "outline";
   disabled?: boolean;
+  // 긴 라벨(예: "로그인 없이 계속")이 줄바꿈되지 않도록 고정 94px 대신 내용에 맞춰 늘어남
+  wide?: boolean;
 }) {
   // Figma 팝업 버튼: 모두 outline (흰 배경 + 회색 테두리)
   // primary/danger도 동일 스타일로 맞춤
@@ -129,7 +134,9 @@ export function ModalButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex h-[30px] w-[94px] shrink-0 items-center justify-center rounded px-5 text-sm font-medium tracking-[-0.154px] disabled:opacity-50 ${styles[variant]}`}
+      className={`flex h-[30px] shrink-0 items-center justify-center whitespace-nowrap rounded text-sm font-medium tracking-[-0.154px] disabled:opacity-50 ${
+        wide ? "px-6" : "w-[94px] px-5"
+      } ${styles[variant]}`}
     >
       {children}
     </button>
