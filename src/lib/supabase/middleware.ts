@@ -1,11 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { DEV_AUTH_COOKIE, isSupabaseConfigured } from "./config";
+import { DEV_AUTH_COOKIE, GUEST_COOKIE, isSupabaseConfigured } from "./config";
 
 export async function updateSession(request: NextRequest) {
   const isAuthPage =
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/signup");
+
+  // 게스트는 로그인 화면으로 돌아갈 수 있어야 한다(요구사항 4).
+  const isGuestFlagged = request.cookies.get(GUEST_COOKIE)?.value === "1";
 
   if (!isSupabaseConfigured()) {
     const devSession = request.cookies.get(DEV_AUTH_COOKIE)?.value === "1";
@@ -16,7 +19,7 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    if (devSession && isAuthPage) {
+    if (devSession && isAuthPage && !isGuestFlagged) {
       const url = request.nextUrl.clone();
       url.pathname = "/all";
       return NextResponse.redirect(url);
@@ -58,7 +61,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthPage) {
+  if (user && !user.is_anonymous && isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/all";
     return NextResponse.redirect(url);
