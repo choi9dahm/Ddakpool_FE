@@ -64,7 +64,7 @@ export function JobCard({
 
   return (
     <div
-      className="font-pretendard relative flex h-[192px] w-[252px] cursor-pointer flex-col rounded-2xl border border-dd-gray-400 bg-white p-4 shadow-sm transition hover:shadow-md"
+      className="font-pretendard relative flex min-h-[192px] w-full cursor-pointer flex-col rounded-2xl border border-dd-gray-400 bg-white p-3 shadow-sm transition hover:shadow-md sm:h-[192px] sm:w-[252px] sm:p-4"
       onClick={handleOpen}
     >
       <div ref={menuRef} className="flex shrink-0 items-start justify-between">
@@ -108,7 +108,7 @@ export function JobCard({
         )}
       </div>
 
-      <h3 className="mt-2 line-clamp-1 text-base font-bold leading-tight text-dd-black">
+      <h3 className="mt-2 line-clamp-2 text-sm font-bold leading-tight text-dd-black sm:line-clamp-1 sm:text-base">
         {job.recruitment_field || job.job_title || "모집 분야"}
       </h3>
 

@@ -230,7 +230,7 @@ export function SignupForm() {
         onSubmit={handleFormSubmit}
         className="font-pretendard flex w-full max-w-[400px] flex-col gap-4"
       >
-        <div className="absolute right-12 top-12">
+        <div className="mb-1 self-end lg:absolute lg:right-12 lg:top-12 lg:mb-0">
           <AssetImage
             src={assets.logoAuth}
             alt="딱풀"
@@ -240,7 +240,7 @@ export function SignupForm() {
           />
         </div>
 
-        <p className="text-[36px] font-light leading-snug text-dd-black">
+        <p className="text-[28px] font-light leading-snug text-dd-black sm:text-[36px]">
           마감돼도 괜찮아,{" "}
           <span className="font-semibold">딱풀에 붙여뒀으니까!</span>
         </p>

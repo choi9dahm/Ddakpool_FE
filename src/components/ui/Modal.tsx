@@ -79,7 +79,7 @@ export function Modal({
       />
       <div
         className="font-pretendard relative z-10 flex w-full flex-col overflow-hidden rounded-2xl shadow-xl"
-        style={{ width, maxWidth: width }}
+        style={{ maxWidth: width }}
         role="dialog"
         aria-modal="true"
       >
@@ -89,7 +89,7 @@ export function Modal({
         >
           {title}
         </div>
-        <div className="flex flex-col items-center justify-center gap-5 rounded-b-2xl border border-t-0 border-dd-gray-500 bg-white px-8 pb-8 pt-7">
+        <div className="flex flex-col items-center justify-center gap-5 rounded-b-2xl border border-t-0 border-dd-gray-500 bg-white px-5 pb-6 pt-5 sm:px-8 sm:pb-8 sm:pt-7">
           <div className="flex flex-col items-center justify-center gap-2 text-center">
             <ModalIcon variant={variant} />
             <div className="text-base font-medium leading-[1.3] tracking-[-0.176px] text-dd-black">
@@ -97,7 +97,7 @@ export function Modal({
             </div>
           </div>
           {actions && (
-            <div className="flex justify-center gap-5">{actions}</div>
+            <div className="flex flex-wrap justify-center gap-3 sm:gap-5">{actions}</div>
           )}
         </div>
       </div>

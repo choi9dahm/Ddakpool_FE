@@ -115,7 +115,7 @@ export function LoginForm() {
         onSubmit={handleSubmit}
         className="font-pretendard flex w-full max-w-[400px] flex-col gap-5"
       >
-        <div className="absolute right-12 top-12">
+        <div className="mb-1 self-end lg:absolute lg:right-12 lg:top-12 lg:mb-0">
           <AssetImage
             src={assets.logoAuth}
             alt="딱풀"
@@ -125,7 +125,7 @@ export function LoginForm() {
           />
         </div>
 
-        <p className="text-[36px] font-light leading-snug text-dd-black">
+        <p className="text-[28px] font-light leading-snug text-dd-black sm:text-[36px]">
           딱 붙여두고, 딱 맞게 꺼내 쓰는{" "}
           <span className="font-semibold">딱풀!</span>
         </p>

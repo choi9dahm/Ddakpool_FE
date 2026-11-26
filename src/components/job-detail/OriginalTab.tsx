@@ -199,7 +199,7 @@ export function OriginalTab({
           </div>
 
           {totalCount > 0 && (
-            <div className="flex flex-wrap gap-5">
+            <div className="flex flex-wrap gap-3 sm:gap-5">
               {savedImages.map((img) => {
                 const src = getJobImageUrl(img.storage_path);
                 return (

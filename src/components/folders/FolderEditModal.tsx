@@ -52,7 +52,7 @@ function IconButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex size-5 shrink-0 items-center justify-center opacity-70 transition-opacity hover:opacity-100"
+      className="flex size-8 shrink-0 items-center justify-center opacity-70 transition-opacity hover:opacity-100 md:size-5"
       aria-label={label}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -245,14 +245,14 @@ export function FolderEditModal({ open, onClose }: FolderEditModalProps) {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
           className="absolute inset-0 bg-black/50"
           onClick={handleClose}
         />
         <div
-          className="relative z-10 flex flex-col rounded-2xl bg-white px-6 py-6 shadow-xl"
-          style={{ width: layout.folderModalWidth }}
+          className="relative z-10 flex max-h-[90dvh] w-full flex-col overflow-y-auto rounded-2xl bg-white px-6 py-6 shadow-xl"
+          style={{ maxWidth: layout.folderModalWidth }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="folder-edit-title"

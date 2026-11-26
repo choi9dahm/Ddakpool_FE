@@ -44,14 +44,14 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
-      <div className="flex w-full max-w-[400px] flex-col overflow-hidden rounded-[30px] bg-white shadow-xl">
+      <div className="flex max-h-[90dvh] w-full max-w-[400px] flex-col overflow-y-auto rounded-[30px] bg-white shadow-xl">
         <AssetImage
           src={assets.onboarding[step] ?? assets.onboarding[0]}
           alt=""
           width={400}
           height={280}
-          className="h-[280px] w-full shrink-0 object-cover"
-          placeholderClassName="h-[280px] w-full bg-dd-gray-200"
+          className="h-[200px] w-full shrink-0 object-cover sm:h-[280px]"
+          placeholderClassName="h-[200px] w-full bg-dd-gray-200 sm:h-[280px]"
         />
 
         <div className="flex shrink-0 justify-center gap-2 py-3">
@@ -75,7 +75,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
           ))}
         </div>
 
-        <div className="flex shrink-0 flex-col px-8 pb-6 pt-1">
+        <div className="flex shrink-0 flex-col px-6 pb-6 pt-1 sm:px-8">
           <h2 className="whitespace-pre-line text-lg font-bold leading-snug text-dd-black">
             {slide.title}
           </h2>
