@@ -102,7 +102,7 @@ export function SettingsPage() {
       <HeaderArea compact />
 
       {/* 뒤로가기 바 — Figma 758:26835 */}
-      <div className="flex h-[51px] shrink-0 items-center bg-dd-gray-100 px-8">
+      <div className="flex h-[51px] shrink-0 items-center bg-dd-gray-100 px-4 md:px-8">
         <button
           type="button"
           onClick={() => router.push("/all")}
@@ -115,9 +115,9 @@ export function SettingsPage() {
       </div>
 
       {/* 본문 2컬럼 — Figma 758:26252 */}
-      <div className="flex flex-1 items-start justify-between gap-10 overflow-y-auto px-20 py-8">
+      <div className="flex flex-1 flex-col gap-8 overflow-y-auto px-4 py-6 md:flex-row md:items-start md:justify-between md:gap-10 md:px-8 lg:px-20 md:py-8">
         {/* 좌측: 닉네임/이메일/로그아웃 */}
-        <div className="flex w-full max-w-[463px] flex-col gap-[15px] px-[47px] py-1">
+        <div className="flex w-full max-w-[463px] flex-col gap-[15px] py-1 md:px-[47px]">
           <div className="flex w-full max-w-[384px] flex-col gap-[9px]">
             <div className="flex h-[19px] items-center justify-between pr-3.5">
               <label className="font-pretendard text-base font-semibold text-dd-black">

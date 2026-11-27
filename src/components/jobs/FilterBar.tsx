@@ -86,7 +86,7 @@ export function FilterBar({
     SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "저장일 내림차순";
 
   return (
-    <div className="flex h-[60px] shrink-0 items-center justify-between bg-dd-gray-100 px-20">
+    <div className="flex h-[60px] shrink-0 items-center justify-between gap-3 bg-dd-gray-100 px-4 md:gap-0 md:px-8 lg:px-20">
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <div className="relative shrink-0">
           <button
@@ -114,7 +114,7 @@ export function FilterBar({
                 className="fixed inset-0 z-10"
                 onClick={() => setDropdownOpen(false)}
               />
-              <div className="absolute left-0 top-full z-20 mt-2 flex w-[524px] flex-col overflow-hidden rounded-[15px] border border-dd-gray-200 bg-white shadow-lg">
+              <div className="absolute left-0 top-full z-20 mt-2 flex w-[calc(100vw-2rem)] max-w-[524px] flex-col overflow-hidden rounded-[15px] border border-dd-gray-200 bg-white shadow-lg">
                 <div className="flex h-[58px] shrink-0 items-center justify-center px-[10.5px] py-2">
                   <div className="flex h-10 w-full max-w-[503px] items-center gap-2.5 overflow-hidden rounded-full bg-[#F1F1F1] pl-5">
                     <input
@@ -210,8 +210,8 @@ export function FilterBar({
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-6">
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-dd-black">
+      <div className="flex shrink-0 items-center gap-3 md:gap-6">
+        <label className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-dd-black md:gap-2 md:text-sm">
           <input
             type="checkbox"
             checked={excludeExpired}
@@ -225,7 +225,7 @@ export function FilterBar({
           <button
             type="button"
             onClick={() => setSortOpen(!sortOpen)}
-            className="flex items-center gap-2 text-sm text-dd-black"
+            className="flex items-center gap-1.5 whitespace-nowrap text-xs text-dd-black md:gap-2 md:text-sm"
           >
             <AssetImage
               src={assets.iconSortCaret}

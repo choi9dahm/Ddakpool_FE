@@ -151,7 +151,7 @@ export function FolderSubmitButton({
         type="button"
         onClick={onButtonClick}
         disabled={disabled}
-        className="font-pretendard flex h-[55px] shrink-0 items-center justify-center gap-[4px] rounded-[30px] bg-dd-primary-green px-4 text-base font-bold tracking-[-0.176px] text-white disabled:opacity-50"
+        className="font-pretendard flex h-12 shrink-0 items-center justify-center gap-[4px] rounded-[30px] bg-dd-primary-green px-3.5 text-sm font-bold tracking-[-0.176px] text-white disabled:opacity-50 md:h-[55px] md:px-4 md:text-base"
       >
         {label}
         <AssetImage

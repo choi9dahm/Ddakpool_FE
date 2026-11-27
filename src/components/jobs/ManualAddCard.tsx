@@ -10,7 +10,7 @@ export function ManualAddCard({ onClick }: ManualAddCardProps) {
     <button
       type="button"
       onClick={onClick}
-      className="flex h-[192px] w-[252px] flex-col items-center justify-center gap-2 rounded-2xl border border-dd-gray-400 bg-white shadow-sm transition hover:shadow-md"
+      className="flex min-h-[192px] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dd-gray-400 bg-white shadow-sm transition hover:shadow-md sm:h-[192px] sm:w-[252px]"
     >
       <span className="text-4xl font-light leading-none text-dd-gray-500">
         +

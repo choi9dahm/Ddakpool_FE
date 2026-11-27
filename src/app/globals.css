@@ -32,3 +32,22 @@ body {
 .font-alata {
   font-family: var(--font-alata);
 }
+
+/* 가로 스크롤로 넘기는 영역(모바일 GNB 탭 등)의 스크롤바를 숨긴다. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* iOS Safari는 글자 크기가 16px 미만인 입력에 포커스하면 화면을 확대하고,
+   확대된 상태로 남아 레이아웃이 깨져 보인다. 좁은 화면에서만 16px로 올려 막는다.
+   컴포넌트마다 text-sm/text-xs 를 고치는 대신 한곳에서 처리한다. */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}

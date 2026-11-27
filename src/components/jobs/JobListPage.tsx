@@ -217,14 +217,14 @@ export function JobListPage({ folderId, uncategorized }: JobListPageProps) {
         onSortChange={setSort}
       />
 
-      <div className="flex-1 overflow-y-auto bg-dd-gray-100 px-20 py-6">
+      <div className="flex-1 overflow-y-auto bg-dd-gray-100 px-4 py-4 md:px-8 lg:px-20 md:py-6">
         {isLoading ? (
           <div className="flex justify-center py-20">
             <Spinner className="size-8 text-dd-green" />
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-[repeat(auto-fill,252px)] justify-start gap-3">
+            <div className="grid grid-cols-2 justify-start gap-3 sm:grid-cols-[repeat(auto-fill,252px)]">
               <ManualAddCard onClick={() => setManualAddOpen(true)} />
               {jobs.map((job) => (
                 <JobCard

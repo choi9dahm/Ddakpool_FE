@@ -87,12 +87,12 @@ export function HeaderArea({ onSubmit, loading, compact }: HeaderAreaProps) {
 
   return (
     <header
-      className={`relative shrink-0 bg-white px-5 ${
+      className={`relative shrink-0 bg-white px-4 pt-4 md:px-5 md:pt-[22px] ${
         compact
-          ? "min-h-[216px] border-b border-dd-gray-200 pb-4 pt-[22px]"
+          ? "border-b border-dd-gray-200 pb-4 md:min-h-[216px]"
           : showUrlBar
-            ? "pb-6 pt-[22px]"
-            : "pb-5 pt-[22px]"
+            ? "pb-5 md:pb-6"
+            : "pb-4 md:pb-5"
       }`}
     >
       <div className={`flex ${compact || pathname === "/settings" ? "h-[21px]" : "justify-end"}`}>
@@ -123,8 +123,8 @@ export function HeaderArea({ onSubmit, loading, compact }: HeaderAreaProps) {
       </div>
 
       <div
-        className={`flex items-center justify-center gap-[15px] ${
-          compact ? "mt-4" : "mt-[33px]"
+        className={`flex items-center justify-center gap-2.5 md:gap-[15px] ${
+          compact ? "mt-3 md:mt-4" : "mt-4 md:mt-[33px]"
         }`}
       >
         <Link href="/all" className="shrink-0" aria-label="딱풀 홈">
@@ -133,8 +133,8 @@ export function HeaderArea({ onSubmit, loading, compact }: HeaderAreaProps) {
             alt=""
             width={84}
             height={84}
-            className="size-[84px]"
-            placeholderClassName="size-[84px] rounded bg-dd-gray-200"
+            className="size-[60px] md:size-[84px]"
+            placeholderClassName="size-[60px] rounded bg-dd-gray-200 md:size-[84px]"
           />
         </Link>
         <Link href="/all" className="shrink-0" aria-label="딱풀 홈">
@@ -143,16 +143,16 @@ export function HeaderArea({ onSubmit, loading, compact }: HeaderAreaProps) {
             alt="ddakpool"
             width={194}
             height={64}
-            className="h-[61px] w-auto"
-            placeholderClassName="h-[61px] w-[185px] rounded bg-dd-gray-200"
+            className="h-[44px] w-auto md:h-[61px]"
+            placeholderClassName="h-[44px] w-[133px] rounded bg-dd-gray-200 md:h-[61px] md:w-[185px]"
             priority
           />
         </Link>
       </div>
 
       {showUrlBar && onSubmit && (
-        <div className="relative mx-auto mt-[22px] flex w-full max-w-[686px] flex-col items-center">
-          <div className="flex h-[55px] w-full items-center rounded-[42px] bg-dd-input-bg pl-8">
+        <div className="relative mx-auto mt-4 flex w-full max-w-[686px] flex-col items-center md:mt-[22px]">
+          <div className="flex h-12 w-full items-center rounded-[42px] bg-dd-input-bg pl-4 md:h-[55px] md:pl-8">
             <input
               type="url"
               value={url}

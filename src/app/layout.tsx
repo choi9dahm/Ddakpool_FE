@@ -15,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className="font-pretendard min-h-screen bg-dd-gray-100 text-dd-black antialiased">
+      <body className="font-pretendard min-h-dvh bg-dd-gray-100 text-dd-black antialiased">
         <PostHogProvider>
           <QueryProvider>{children}</QueryProvider>
         </PostHogProvider>
